@@ -71,12 +71,6 @@ const LightsDisplay: React.FC = () => {
             (vote) => vote.judgeId === sideBId
           );
 
-          console.log({
-            sideA: sideAVote?.value ?? null,
-            head: headVote?.value ?? null,
-            sideB: sideBVote?.value ?? null,
-          });
-
           setLights({
             sideA: sideAVote?.value ?? null,
             head: headVote?.value ?? null,
@@ -288,7 +282,7 @@ const LightsDisplay: React.FC = () => {
 
                 <div
                   className={`w-16 h-16 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-full border-4 border-gray-600 transition-all duration-500 cursor-pointer transform hover:scale-105 flex items-center justify-center shadow-lg ${
-                    !value
+                    !value || !(lights.head && lights.sideA && lights.sideB)
                       ? "bg-gray-600"
                       : value === "white"
                       ? "bg-white"
@@ -298,11 +292,14 @@ const LightsDisplay: React.FC = () => {
 
                 <div
                   className={`w-8 h-4 sm:w-12 sm:h-6 md:w-16 md:h-8 rounded-md transition-colors duration-500 cursor-pointer ${
-                    !meet?.useYellowBlue
+                    !meet?.useYellowBlue ||
+                    !(lights.head && lights.sideA && lights.sideB)
                       ? "bg-gray-600"
                       : value === "yellow"
                       ? "bg-yellow-400"
-                      : "bg-blue-500"
+                      : value === "blue"
+                      ? "bg-blue-500"
+                      : "bg-gray-600"
                   }`}
                 />
               </div>
