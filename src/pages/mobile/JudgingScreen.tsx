@@ -1,0 +1,256 @@
+import { useSnackbar } from "notistack";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { animated, useSpring } from "react-spring";
+import { v4 as uuidv4 } from "uuid";
+import type { Judge, Meet } from "../../interfaces";
+import {
+  getActiveMeet,
+  getJudge,
+  getMeetById,
+  resetVotes,
+  submitVote,
+} from "../../services/services";
+import { JudgeRole, mapJudgeRole, VoteColor } from "../../utils";
+import { VoteButton } from "../../components/VoteButton";
+
+const JudgingScreen: React.FC = () => {
+  const { enqueueSnackbar } = useSnackbar();
+  const [currentVote, setCurrentVote] = useState<VoteColor | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [resetPressed, setResetPressed] = useState(false);
+  const [meet, setMeet] = useState<Meet | null>(null);
+  const [judge, setJudge] = useState<Judge | null>(null);
+  const judgeId = getJudge();
+
+  const [submitSpring, setSubmitSpring] = useSpring(() => ({
+    scale: 0,
+    opacity: 0,
+  }));
+
+  const [resetSpring, setResetSpring] = useSpring(() => ({
+    scale: 1,
+    rotate: 0,
+  }));
+
+  const resetFeedbackTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const fetchMeet = async (meetId: string) => {
+      if (meetId) {
+        const unsubscribe = getMeetById(meetId, (meet) => {
+          if (!meet) {
+            enqueueSnackbar("Meet not found", {
+              variant: "error",
+            });
+            return;
+          }
+          setMeet(meet);
+          setJudge(meet.judges.find((judge) => judge.id === judgeId) ?? null);
+        });
+        return () => unsubscribe();
+      }
+    };
+    const meetId = getActiveMeet();
+    if (meetId) {
+      fetchMeet(meetId);
+    }
+  }, [enqueueSnackbar, judgeId]);
+
+  // Clean up timers on unmount
+  useEffect(() => {
+    return () => {
+      if (resetFeedbackTimeout.current) {
+        clearTimeout(resetFeedbackTimeout.current);
+      }
+    };
+  }, []);
+
+  const handleVote = useCallback(
+    async (color: VoteColor) => {
+      if (submitted) return;
+
+      setCurrentVote(color);
+      setSubmitted(true);
+
+      await submitVote(meet?.id ?? "", {
+        id: uuidv4(),
+        judgeId: judge?.id ?? "",
+        value: color,
+      });
+
+      setSubmitted(false);
+
+      setSubmitSpring({
+        scale: 1.2,
+        opacity: 1,
+        onRest: () => {
+          setSubmitSpring({
+            scale: 1,
+            opacity: 0,
+            delay: 800,
+          });
+        },
+      });
+    },
+    [judge?.id, meet?.id, setSubmitSpring, submitted]
+  );
+
+  const handleReset = useCallback(async () => {
+    if (resetPressed) return;
+
+    setResetPressed(true);
+
+    setResetSpring({
+      scale: 0.8,
+      rotate: 360,
+      config: { tension: 300, friction: 10 },
+      onRest: () => {
+        setResetSpring({
+          scale: 1,
+          rotate: 0,
+        });
+      },
+    });
+
+    if (navigator.vibrate) {
+      navigator.vibrate([50, 100, 50]);
+    }
+
+    await resetVotes(meet?.id ?? "");
+
+    setSubmitSpring({
+      scale: 1.2,
+      opacity: 1,
+      onRest: () => {
+        setSubmitSpring({
+          scale: 1,
+          opacity: 0,
+          delay: 500,
+        });
+      },
+    });
+
+    resetFeedbackTimeout.current = setTimeout(() => {
+      setResetPressed(false);
+    }, 1500);
+  }, [meet?.id, resetPressed, setResetSpring, setSubmitSpring]);
+
+  const getGridCols = () => {
+    return meet?.useYellowBlue ? "grid-cols-2" : "grid-cols-1";
+  };
+
+  return (
+    <div className="h-screen bg-gray-900 flex flex-col">
+      <div className="p-4 bg-gray-800 flex items-center justify-between">
+        <h1 className="text-xl font-bold text-white">
+          {mapJudgeRole(judge?.role ?? JudgeRole.Head)}
+        </h1>
+        {currentVote && (
+          <>
+            <div className="flex items-center space-x-2">
+              <div
+                className={`w-4 h-4 rounded-full ${
+                  currentVote === VoteColor.White
+                    ? "bg-white"
+                    : currentVote === VoteColor.Red
+                    ? "bg-red-600"
+                    : currentVote === VoteColor.Yellow
+                    ? "bg-yellow-400"
+                    : "bg-blue-500"
+                }`}
+              ></div>
+              <span className="text-white">Vote Submitted</span>
+            </div>
+            {judge?.role === JudgeRole.Head && (
+              <animated.button
+                onClick={handleReset}
+                disabled={resetPressed}
+                style={{
+                  scale: resetSpring.scale,
+                  rotate: resetSpring.rotate,
+                }}
+                className="w-8 h-8 flex items-center justify-center z-20 focus:outline-none"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+              </animated.button>
+            )}
+          </>
+        )}
+      </div>
+
+      <div className={`flex-1 grid ${getGridCols()} gap-1 p-1 relative`}>
+        <VoteButton
+          color={VoteColor.White}
+          isSubmitted={submitted}
+          onVote={handleVote}
+        />
+        <VoteButton
+          color={VoteColor.Red}
+          isSubmitted={submitted}
+          onVote={handleVote}
+        />
+
+        {meet?.useYellowBlue && (
+          <>
+            <VoteButton
+              color={VoteColor.Yellow}
+              isSubmitted={submitted}
+              onVote={handleVote}
+            />
+            <VoteButton
+              color={VoteColor.Blue}
+              isSubmitted={submitted}
+              onVote={handleVote}
+            />
+          </>
+        )}
+      </div>
+
+      {/* Submission animation */}
+      <animated.div
+        style={{
+          scale: submitSpring.scale,
+          opacity: submitSpring.opacity,
+        }}
+        className="fixed inset-0 flex items-center justify-center pointer-events-none"
+      >
+        <div className="bg-white bg-opacity-20 rounded-full p-16">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-24 w-24 text-green-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={3}
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+        </div>
+      </animated.div>
+
+      {/* Long press instructions */}
+      <div className="py-3 px-4 bg-gray-800 text-gray-400 text-center text-sm">
+        Press and hold a button to submit your vote
+      </div>
+    </div>
+  );
+};
+
+export default JudgingScreen;
