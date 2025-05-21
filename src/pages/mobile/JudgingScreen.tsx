@@ -196,11 +196,13 @@ const JudgingScreen: React.FC = () => {
           color={VoteColor.White}
           isSubmitted={submitted}
           onVote={handleVote}
+          disabled={meet?.votes.length === 3}
         />
         <VoteButton
           color={VoteColor.Red}
           isSubmitted={submitted}
           onVote={handleVote}
+          disabled={meet?.votes.length === 3}
         />
 
         {meet?.useYellowBlue && (
@@ -209,11 +211,13 @@ const JudgingScreen: React.FC = () => {
               color={VoteColor.Yellow}
               isSubmitted={submitted}
               onVote={handleVote}
+              disabled={meet?.votes.length === 3}
             />
             <VoteButton
               color={VoteColor.Blue}
               isSubmitted={submitted}
               onVote={handleVote}
+              disabled={meet?.votes.length === 3}
             />
           </>
         )}

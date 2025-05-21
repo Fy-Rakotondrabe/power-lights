@@ -50,33 +50,39 @@ const LightsDisplay: React.FC = () => {
       unsubscribe = getMeetById(meetId, (currentMeet) => {
         if (currentMeet) {
           setMeet(currentMeet);
-          if (currentMeet.judges.length === 3) {
-            const headId = currentMeet.judges.find(
-              (judge) => judge.role === JudgeRole.Head
-            )?.id;
-            const sideAId = currentMeet.judges.find(
-              (judge) => judge.role === JudgeRole.SideA
-            )?.id;
-            const sideBId = currentMeet.judges.find(
-              (judge) => judge.role === JudgeRole.SideB
-            )?.id;
+          // if (currentMeet.judges.length === 3) {
+          const headId = currentMeet.judges.find(
+            (judge) => judge.role === JudgeRole.Head
+          )?.id;
+          const sideAId = currentMeet.judges.find(
+            (judge) => judge.role === JudgeRole.SideA
+          )?.id;
+          const sideBId = currentMeet.judges.find(
+            (judge) => judge.role === JudgeRole.SideB
+          )?.id;
 
-            const headVote = currentMeet.votes.find(
-              (vote) => vote.judgeId === headId
-            );
-            const sideAVote = currentMeet.votes.find(
-              (vote) => vote.judgeId === sideAId
-            );
-            const sideBVote = currentMeet.votes.find(
-              (vote) => vote.judgeId === sideBId
-            );
+          const headVote = currentMeet.votes.find(
+            (vote) => vote.judgeId === headId
+          );
+          const sideAVote = currentMeet.votes.find(
+            (vote) => vote.judgeId === sideAId
+          );
+          const sideBVote = currentMeet.votes.find(
+            (vote) => vote.judgeId === sideBId
+          );
 
-            setLights({
-              sideA: sideAVote?.value ?? null,
-              head: headVote?.value ?? null,
-              sideB: sideBVote?.value ?? null,
-            });
-          }
+          console.log({
+            sideA: sideAVote?.value ?? null,
+            head: headVote?.value ?? null,
+            sideB: sideBVote?.value ?? null,
+          });
+
+          setLights({
+            sideA: sideAVote?.value ?? null,
+            head: headVote?.value ?? null,
+            sideB: sideBVote?.value ?? null,
+          });
+          // }
         } else {
           setMeet(null);
           enqueueSnackbar("Meet not found or an error occurred.", {
@@ -201,9 +207,7 @@ const LightsDisplay: React.FC = () => {
         )}
       </div>
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col">
-        {/* Top bar with controls */}
         <div
           className={`bg-gray-800 p-2 flex items-center ${
             isFullScreen ? "hidden" : ""
