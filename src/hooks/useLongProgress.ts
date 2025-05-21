@@ -4,6 +4,7 @@ import { useState } from "react";
 
 export const useLongPress = (
   onLongPress: () => void,
+  disabled: boolean,
   options = { delay: 1000, vibrationPattern: [100, 50, 200] }
 ) => {
   const [pressing, setPressing] = useState(false);
@@ -63,12 +64,14 @@ export const useLongPress = (
   return {
     pressing,
     progress,
-    handlers: {
-      onTouchStart: start,
-      onTouchEnd: end,
-      onMouseDown: start,
-      onMouseUp: end,
-      onMouseLeave: end,
-    },
+    handlers: disabled
+      ? null
+      : {
+          onTouchStart: start,
+          onTouchEnd: end,
+          onMouseDown: start,
+          onMouseUp: end,
+          onMouseLeave: end,
+        },
   };
 };

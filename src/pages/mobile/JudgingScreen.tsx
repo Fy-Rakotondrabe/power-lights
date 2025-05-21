@@ -20,6 +20,7 @@ const JudgingScreen: React.FC = () => {
   const [resetPressed, setResetPressed] = useState(false);
   const [meet, setMeet] = useState<Meet | null>(null);
   const [judge, setJudge] = useState<Judge | null>(null);
+  const [showWaitModal, setShowWaitModal] = useState(false);
   const judgeId = getJudge();
 
   const [submitSpring, setSubmitSpring] = useSpring(() => ({
@@ -46,6 +47,9 @@ const JudgingScreen: React.FC = () => {
           }
           setMeet(meet);
           setJudge(meet.judges.find((judge) => judge.id === judgeId) ?? null);
+          if (meet.votes.length === 0) {
+            setShowWaitModal(false);
+          }
         });
         return () => unsubscribe();
       }
@@ -78,6 +82,10 @@ const JudgingScreen: React.FC = () => {
         value: color,
       });
 
+      if (judge?.role !== JudgeRole.Head) {
+        setShowWaitModal(true);
+      }
+
       setSubmitted(false);
 
       setSubmitSpring({
@@ -92,7 +100,7 @@ const JudgingScreen: React.FC = () => {
         },
       });
     },
-    [judge?.id, meet?.id, setSubmitSpring, submitted]
+    [judge?.id, judge?.role, meet?.id, setSubmitSpring, submitted]
   );
 
   const handleReset = useCallback(async () => {
@@ -117,6 +125,8 @@ const JudgingScreen: React.FC = () => {
     }
 
     await resetVotes(meet?.id ?? "");
+
+    setShowWaitModal(false);
 
     setSubmitSpring({
       scale: 1.2,
@@ -248,6 +258,31 @@ const JudgingScreen: React.FC = () => {
           </svg>
         </div>
       </animated.div>
+
+      {showWaitModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-8 max-w-md w-full mx-4 text-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-16 w-16 mx-auto text-green-500 mb-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+            <h2 className="text-xl font-bold text-white mb-2">
+              Vote submitted
+            </h2>
+            <p className="text-gray-300">Please wait for the next athletes</p>
+          </div>
+        </div>
+      )}
 
       {/* Long press instructions */}
       <div className="py-3 px-4 bg-gray-800 text-gray-400 text-center text-sm">
