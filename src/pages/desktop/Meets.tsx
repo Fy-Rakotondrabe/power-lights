@@ -40,14 +40,19 @@ const MeetsDrawer: React.FC<MeetsDrawerProps> = ({ isOpen, onClose }) => {
     }
   }, [enqueueSnackbar, isOpen]);
 
-  const handleResumeMeet = async (meet: Meet) => {
+  const handleResumeMeet = (meet: Meet) => {
     try {
-      await setActiveMeet(meet.id);
+      setActiveMeet(meet.id);
       navigate("/desktop/lights");
     } catch (err) {
       setError("Failed to resume meet. Please try again.");
       console.error("Error resuming meet:", err);
     }
+  };
+
+  const handleViewMeet = (meet: Meet) => {
+    setActiveMeet(meet.id);
+    navigate("/desktop/lights?preview=1");
   };
 
   const isToday = (dateInput: Date | string) => {
@@ -129,14 +134,24 @@ const MeetsDrawer: React.FC<MeetsDrawerProps> = ({ isOpen, onClose }) => {
                       Created: {dayjs(createdAt).format("MMM D, YYYY")}
                     </div>
 
-                    {isToday(createdAt) && (
-                      <button
-                        onClick={() => handleResumeMeet(meet)}
-                        className="mt-3 w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors duration-200"
-                      >
-                        Resume Meet
-                      </button>
-                    )}
+                    <div className="flex justify-between h-13 gap-2">
+                      {isToday(createdAt) && (
+                        <>
+                          <button
+                            onClick={() => handleResumeMeet(meet)}
+                            className="mt-3 w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors duration-200"
+                          >
+                            Resume
+                          </button>
+                          <button
+                            onClick={() => handleViewMeet(meet)}
+                            className="mt-3 w-full bg-transparent text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors duration-200 outline outline-2 outline-blue-600"
+                          >
+                            View
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </li>
                 );
               })}

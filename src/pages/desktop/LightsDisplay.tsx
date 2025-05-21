@@ -2,7 +2,7 @@ import type { Unsubscribe } from "firebase/firestore";
 import { useSnackbar } from "notistack";
 import { QRCodeCanvas } from "qrcode.react";
 import React, { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import type { Meet } from "../../interfaces";
 import {
   getActiveMeet,
@@ -22,6 +22,8 @@ const LightsDisplay: React.FC = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const preview = searchParams.get("preview") === "1";
 
   const [meet, setMeet] = useState<Meet | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,9 +37,9 @@ const LightsDisplay: React.FC = () => {
   useEffect(() => {
     let unsubscribe: Unsubscribe | undefined;
 
-    const setupMeetListener = async () => {
+    const setupMeetListener = () => {
       setLoading(true);
-      const meetId = await getActiveMeet();
+      const meetId = getActiveMeet();
       if (!meetId) {
         enqueueSnackbar("Meet not found or an error occurred.", {
           variant: "error",
@@ -134,72 +136,74 @@ const LightsDisplay: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-gray-900 overflow-hidden">
-      <div
-        className={`bg-gray-800 shadow-lg transition-all duration-300 flex flex-col ${
-          isDrawerOpen ? "w-64" : "w-0"
-        } ${isFullScreen ? "hidden" : ""}`}
-      >
-        {isDrawerOpen && (
-          <>
-            <div className="p-4 border-b border-gray-700">
-              <h2 className="text-xl font-bold text-white">{meet?.name}</h2>
-            </div>
+      {!preview && (
+        <div
+          className={`bg-gray-800 shadow-lg transition-all duration-300 flex flex-col ${
+            isDrawerOpen ? "w-64" : "w-0"
+          } ${isFullScreen ? "hidden" : ""}`}
+        >
+          {isDrawerOpen && (
+            <>
+              <div className="p-4 border-b border-gray-700">
+                <h2 className="text-xl font-bold text-white">{meet?.name}</h2>
+              </div>
 
-            <div className="p-4 flex flex-col items-center">
-              <p className="text-gray-400 text-sm mb-2">Scan to connect:</p>
-              <QRCodeCanvas
-                value={meet?.id || ""}
-                size={256}
-                level="H"
-                marginSize={8}
-              />
-              <p className="text-xs text-center text-gray-500 mt-2">
-                Open judge app on mobile device
-              </p>
-            </div>
+              <div className="p-4 flex flex-col items-center">
+                <p className="text-gray-400 text-sm mb-2">Scan to connect:</p>
+                <QRCodeCanvas
+                  value={meet?.id || ""}
+                  size={256}
+                  level="H"
+                  marginSize={8}
+                />
+                <p className="text-xs text-center text-gray-500 mt-2">
+                  Open judge app on mobile device
+                </p>
+              </div>
 
-            <div className="p-4 border-t border-gray-700">
-              <h3 className="text-gray-300 font-medium mb-2">
-                Connected Judges
-              </h3>
-              <ul className="space-y-2">
-                {meet?.judges.map((judge) => (
-                  <li
-                    key={judge.id}
-                    className="flex items-center justify-between"
-                  >
-                    <span className="text-gray-400">
-                      {mapJudgeRole(judge.role)}
-                    </span>
-                    <button
-                      className="text-gray-400 hover:text-red-500 cursor-pointer"
-                      onClick={() => {
-                        logoutJudge(meet?.id ?? "", judge.id);
-                      }}
-                      title="Remove judge"
+              <div className="p-4 border-t border-gray-700">
+                <h3 className="text-gray-300 font-medium mb-2">
+                  Connected Judges
+                </h3>
+                <ul className="space-y-2">
+                  {meet?.judges.map((judge) => (
+                    <li
+                      key={judge.id}
+                      className="flex items-center justify-between"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+                      <span className="text-gray-400">
+                        {mapJudgeRole(judge.role)}
+                      </span>
+                      <button
+                        className="text-gray-400 hover:text-red-500 cursor-pointer"
+                        onClick={() => {
+                          logoutJudge(meet?.id ?? "", judge.id);
+                        }}
+                        title="Remove judge"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </>
-        )}
-      </div>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="flex-1 flex flex-col">
         <div
@@ -207,25 +211,27 @@ const LightsDisplay: React.FC = () => {
             isFullScreen ? "hidden" : ""
           }`}
         >
-          <button
-            onClick={() => setIsDrawerOpen(!isDrawerOpen)}
-            className="text-gray-400 hover:text-white p-2"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          {!preview && (
+            <button
+              onClick={() => setIsDrawerOpen(!isDrawerOpen)}
+              className="text-gray-400 hover:text-white p-2"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
+          )}
           <div className="flex-1"></div>
           <button
             onClick={toggleFullScreen}
