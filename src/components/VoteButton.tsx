@@ -11,6 +11,7 @@ interface ButtonStyle {
 interface VoteButtonProps {
   color: VoteColor;
   isSubmitted: boolean;
+  disabled: boolean;
   onVote: (color: VoteColor) => void;
 }
 
@@ -18,6 +19,7 @@ export const VoteButton: React.FC<VoteButtonProps> = ({
   color,
   isSubmitted,
   onVote,
+  disabled,
 }) => {
   const { pressing, progress, handlers } = useLongPress(() => onVote(color));
 
@@ -63,8 +65,10 @@ export const VoteButton: React.FC<VoteButtonProps> = ({
     <div
       className={`relative ${bg} ${activeBg} flex items-center justify-center 
         ${pressing ? "opacity-80" : "opacity-100"} 
-        ${isSubmitted ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+        ${isSubmitted ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+        ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
       {...handlers}
+      {...(disabled ? { onClick: undefined } : {})}
     >
       {pressing && <ProgressRing progress={progress} />}
       <span className={`text-3xl font-bold ${textColor} select-none`}>
