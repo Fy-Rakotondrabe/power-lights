@@ -9,12 +9,16 @@ import {
   getMeetById,
   resetVotes,
   submitVote,
+  clearJudge,
+  clearActiveMeet,
 } from "../../services/services";
 import { JudgeRole, mapJudgeRole, VoteColor } from "../../utils";
 import { VoteButton } from "../../components/VoteButton";
+import { useNavigate } from "react-router-dom";
 
 const JudgingScreen: React.FC = () => {
   const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
   const [currentVote, setCurrentVote] = useState<VoteColor | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [resetPressed, setResetPressed] = useState(false);
@@ -76,11 +80,24 @@ const JudgingScreen: React.FC = () => {
       setCurrentVote(color);
       setSubmitted(true);
 
-      await submitVote(meet?.id ?? "", {
-        id: uuidv4(),
-        judgeId: judge?.id ?? "",
-        value: color,
-      });
+      const judgeConnected = meet?.judges.find((judge) => judge.id === judgeId);
+      if (judgeConnected) {
+        await submitVote(meet?.id ?? "", {
+          id: uuidv4(),
+          judgeId: judgeConnected.id,
+          value: color,
+        });
+      } else {
+        enqueueSnackbar(
+          "Judge not connected to this meet or removed by admin",
+          {
+            variant: "error",
+          }
+        );
+        navigate("/");
+        clearJudge();
+        clearActiveMeet();
+      }
 
       if (judge?.role !== JudgeRole.Head) {
         setShowWaitModal(true);
@@ -100,7 +117,16 @@ const JudgingScreen: React.FC = () => {
         },
       });
     },
-    [judge?.id, judge?.role, meet?.id, setSubmitSpring, submitted]
+    [
+      enqueueSnackbar,
+      judge?.role,
+      judgeId,
+      meet?.id,
+      meet?.judges,
+      navigate,
+      setSubmitSpring,
+      submitted,
+    ]
   );
 
   const handleReset = useCallback(async () => {
