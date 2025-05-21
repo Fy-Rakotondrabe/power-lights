@@ -1,20 +1,20 @@
 import { useSnackbar } from "notistack";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { animated, useSpring } from "react-spring";
 import { v4 as uuidv4 } from "uuid";
+import { VoteButton } from "../../components/VoteButton";
 import type { Judge, Meet } from "../../interfaces";
 import {
+  clearActiveMeet,
+  clearJudge,
   getActiveMeet,
   getJudge,
   getMeetById,
   resetVotes,
   submitVote,
-  clearJudge,
-  clearActiveMeet,
 } from "../../services/services";
 import { JudgeRole, mapJudgeRole, VoteColor } from "../../utils";
-import { VoteButton } from "../../components/VoteButton";
-import { useNavigate } from "react-router-dom";
 
 const JudgingScreen: React.FC = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -31,13 +31,6 @@ const JudgingScreen: React.FC = () => {
     scale: 0,
     opacity: 0,
   }));
-
-  const [resetSpring, setResetSpring] = useSpring(() => ({
-    scale: 1,
-    rotate: 0,
-  }));
-
-  const resetFeedbackTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const fetchMeet = async (meetId: string) => {
@@ -63,15 +56,6 @@ const JudgingScreen: React.FC = () => {
       fetchMeet(meetId);
     }
   }, [enqueueSnackbar, judgeId]);
-
-  // Clean up timers on unmount
-  useEffect(() => {
-    return () => {
-      if (resetFeedbackTimeout.current) {
-        clearTimeout(resetFeedbackTimeout.current);
-      }
-    };
-  }, []);
 
   const handleVote = useCallback(
     async (color: VoteColor) => {
@@ -99,10 +83,7 @@ const JudgingScreen: React.FC = () => {
         clearActiveMeet();
       }
 
-      if (judge?.role !== JudgeRole.Head) {
-        setShowWaitModal(true);
-      }
-
+      setShowWaitModal(true);
       setSubmitted(false);
 
       setSubmitSpring({
@@ -119,7 +100,6 @@ const JudgingScreen: React.FC = () => {
     },
     [
       enqueueSnackbar,
-      judge?.role,
       judgeId,
       meet?.id,
       meet?.judges,
@@ -134,24 +114,10 @@ const JudgingScreen: React.FC = () => {
 
     setResetPressed(true);
 
-    setResetSpring({
-      scale: 0.8,
-      rotate: 360,
-      config: { tension: 300, friction: 10 },
-      onRest: () => {
-        setResetSpring({
-          scale: 1,
-          rotate: 0,
-        });
-      },
-    });
-
     if (navigator.vibrate) {
       navigator.vibrate([50, 100, 50]);
     }
-
     await resetVotes(meet?.id ?? "");
-
     setShowWaitModal(false);
 
     setSubmitSpring({
@@ -165,11 +131,8 @@ const JudgingScreen: React.FC = () => {
         });
       },
     });
-
-    resetFeedbackTimeout.current = setTimeout(() => {
-      setResetPressed(false);
-    }, 1500);
-  }, [meet?.id, resetPressed, setResetSpring, setSubmitSpring]);
+    setResetPressed(false);
+  }, [meet?.id, resetPressed, setSubmitSpring]);
 
   const getGridCols = () => {
     return meet?.useYellowBlue ? "grid-cols-2" : "grid-cols-1";
@@ -197,32 +160,6 @@ const JudgingScreen: React.FC = () => {
               ></div>
               <span className="text-white">Vote Submitted</span>
             </div>
-            {judge?.role === JudgeRole.Head && (
-              <animated.button
-                onClick={handleReset}
-                disabled={resetPressed}
-                style={{
-                  scale: resetSpring.scale,
-                  rotate: resetSpring.rotate,
-                }}
-                className="w-8 h-8 flex items-center justify-center z-20 focus:outline-none"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-8 w-8 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-              </animated.button>
-            )}
           </>
         )}
       </div>
@@ -305,7 +242,16 @@ const JudgingScreen: React.FC = () => {
             <h2 className="text-xl font-bold text-white mb-2">
               Vote submitted
             </h2>
-            <p className="text-gray-300">Please wait for the next athletes</p>
+            {judge?.role === JudgeRole.Head ? (
+              <button
+                onClick={handleReset}
+                className="bg-transparent text-white px-4 py-2 rounded-md border border-white"
+              >
+                Next Athlete;
+              </button>
+            ) : (
+              <p className="text-gray-300">Please wait for the next athletes</p>
+            )}
           </div>
         </div>
       )}
