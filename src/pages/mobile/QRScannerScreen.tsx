@@ -10,11 +10,12 @@ import {
   setActiveMeet,
   setJudge,
 } from "../../services/services";
+import { useNavigate } from "react-router-dom";
 
 type RoleSelectProps = {
   isOpen: boolean;
   judges: Judge[];
-  onSelect: (role: string) => void;
+  onSelect: (role: string) => Promise<void>;
 };
 
 const RoleSelectBottomSheet: React.FC<RoleSelectProps> = ({
@@ -22,6 +23,17 @@ const RoleSelectBottomSheet: React.FC<RoleSelectProps> = ({
   judges,
   onSelect,
 }) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSelect = useCallback(
+    async (role: string) => {
+      setLoading(true);
+      await onSelect(role);
+      setLoading(false);
+    },
+    [onSelect]
+  );
+
   if (!isOpen) return null;
 
   return (
@@ -37,23 +49,32 @@ const RoleSelectBottomSheet: React.FC<RoleSelectProps> = ({
 
         <div className="space-y-3">
           <button
-            onClick={() => onSelect(JudgeRole.Head)}
-            disabled={judges.some((judge) => judge.role === JudgeRole.Head)}
+            onClick={() => handleSelect(JudgeRole.Head)}
+            disabled={
+              judges.some((judge) => judge.role === JudgeRole.Head) || loading
+            }
             className="w-full bg-blue-600 text-white p-4 rounded-lg text-lg font-medium hover:bg-blue-700 transition-colors"
+            style={{ opacity: loading ? 0.5 : 1 }}
           >
             Head Judge
           </button>
           <button
-            onClick={() => onSelect(JudgeRole.SideA)}
-            disabled={judges.some((judge) => judge.role === JudgeRole.SideA)}
+            onClick={() => handleSelect(JudgeRole.SideA)}
+            disabled={
+              judges.some((judge) => judge.role === JudgeRole.SideA) || loading
+            }
             className="w-full bg-blue-600 text-white p-4 rounded-lg text-lg font-medium hover:bg-blue-700 transition-colors"
+            style={{ opacity: loading ? 0.5 : 1 }}
           >
             Side Judge A
           </button>
           <button
-            onClick={() => onSelect(JudgeRole.SideB)}
-            disabled={judges.some((judge) => judge.role === JudgeRole.SideB)}
+            onClick={() => handleSelect(JudgeRole.SideB)}
+            disabled={
+              judges.some((judge) => judge.role === JudgeRole.SideB) || loading
+            }
             className="w-full bg-blue-600 text-white p-4 rounded-lg text-lg font-medium hover:bg-blue-700 transition-colors"
+            style={{ opacity: loading ? 0.5 : 1 }}
           >
             Side Judge B
           </button>
@@ -68,6 +89,8 @@ const QRScannerScreen: React.FC = () => {
   const [scannedData, setScannedData] = useState<string | null>(null);
   const [showRoleSelect, setShowRoleSelect] = useState(false);
   const [meet, setMeet] = useState<Meet | null>(null);
+
+  const navigate = useNavigate();
 
   const handleScan = (result: IDetectedBarcode[]) => {
     if (result && !scannedData) {
@@ -127,9 +150,10 @@ const QRScannerScreen: React.FC = () => {
         };
         await connectJudge(meet.id, newJudge);
         setJudge(newJudge.id);
+        navigate("/mobile/judge");
       }
     },
-    [meet]
+    [meet, navigate]
   );
 
   return (

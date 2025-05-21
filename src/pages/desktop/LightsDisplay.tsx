@@ -1,6 +1,6 @@
 import type { Unsubscribe } from "firebase/firestore";
 import { useSnackbar } from "notistack";
-import { QRCodeSVG } from "qrcode.react";
+import { QRCodeCanvas } from "qrcode.react";
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Meet } from "../../interfaces";
@@ -147,7 +147,12 @@ const LightsDisplay: React.FC = () => {
 
             <div className="p-4 flex flex-col items-center">
               <p className="text-gray-400 text-sm mb-2">Scan to connect:</p>
-              <QRCodeSVG value={meet?.id || ""} />
+              <QRCodeCanvas
+                value={meet?.id || ""}
+                size={256}
+                level="H"
+                marginSize={8}
+              />
               <p className="text-xs text-center text-gray-500 mt-2">
                 Open judge app on mobile device
               </p>
