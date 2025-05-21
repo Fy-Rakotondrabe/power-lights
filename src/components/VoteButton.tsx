@@ -21,7 +21,10 @@ export const VoteButton: React.FC<VoteButtonProps> = ({
   onVote,
   disabled,
 }) => {
-  const { pressing, progress, handlers } = useLongPress(() => onVote(color));
+  const { pressing, progress, handlers } = useLongPress(
+    () => onVote(color),
+    disabled
+  );
 
   // Configure button styling based on color
   const getButtonStyle = (): ButtonStyle => {
@@ -68,7 +71,6 @@ export const VoteButton: React.FC<VoteButtonProps> = ({
         ${isSubmitted ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
         ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
       {...handlers}
-      {...(disabled ? { onClick: undefined } : {})}
     >
       {pressing && <ProgressRing progress={progress} />}
       <span className={`text-3xl font-bold ${textColor} select-none`}>

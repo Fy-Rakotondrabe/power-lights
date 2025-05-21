@@ -36,6 +36,10 @@ const RoleSelectBottomSheet: React.FC<RoleSelectProps> = ({
 
   if (!isOpen) return null;
 
+  const head = judges.some((judge) => judge.role === JudgeRole.Head);
+  const sideA = judges.some((judge) => judge.role === JudgeRole.SideA);
+  const sideB = judges.some((judge) => judge.role === JudgeRole.SideB);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end justify-center">
       <div
@@ -50,31 +54,25 @@ const RoleSelectBottomSheet: React.FC<RoleSelectProps> = ({
         <div className="space-y-3">
           <button
             onClick={() => handleSelect(JudgeRole.Head)}
-            disabled={
-              judges.some((judge) => judge.role === JudgeRole.Head) || loading
-            }
+            disabled={head || loading}
             className="w-full bg-blue-600 text-white p-4 rounded-lg text-lg font-medium hover:bg-blue-700 transition-colors"
-            style={{ opacity: loading ? 0.5 : 1 }}
+            style={{ opacity: head || loading ? 0.5 : 1 }}
           >
             Head Judge
           </button>
           <button
             onClick={() => handleSelect(JudgeRole.SideA)}
-            disabled={
-              judges.some((judge) => judge.role === JudgeRole.SideA) || loading
-            }
+            disabled={sideA || loading}
             className="w-full bg-blue-600 text-white p-4 rounded-lg text-lg font-medium hover:bg-blue-700 transition-colors"
-            style={{ opacity: loading ? 0.5 : 1 }}
+            style={{ opacity: sideA || loading ? 0.5 : 1 }}
           >
             Side Judge A
           </button>
           <button
             onClick={() => handleSelect(JudgeRole.SideB)}
-            disabled={
-              judges.some((judge) => judge.role === JudgeRole.SideB) || loading
-            }
+            disabled={sideB || loading}
             className="w-full bg-blue-600 text-white p-4 rounded-lg text-lg font-medium hover:bg-blue-700 transition-colors"
-            style={{ opacity: loading ? 0.5 : 1 }}
+            style={{ opacity: sideB || loading ? 0.5 : 1 }}
           >
             Side Judge B
           </button>
