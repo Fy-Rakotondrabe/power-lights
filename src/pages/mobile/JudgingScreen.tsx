@@ -113,12 +113,12 @@ const JudgingScreen: React.FC = () => {
     if (resetPressed) return;
 
     setResetPressed(true);
+    setShowWaitModal(false);
 
     if (navigator.vibrate) {
       navigator.vibrate([50, 100, 50]);
     }
     await resetVotes(meet?.id ?? "");
-    setShowWaitModal(false);
 
     setSubmitSpring({
       scale: 1.2,
@@ -139,7 +139,7 @@ const JudgingScreen: React.FC = () => {
   };
 
   return (
-    <div className="h-screen bg-gray-900 flex flex-col">
+    <div className="h-screen bg-gray-900 flex flex-col select-none">
       <div className="p-4 bg-gray-800 flex items-center justify-between">
         <h1 className="text-xl font-bold text-white">
           {mapJudgeRole(judge?.role ?? JudgeRole.Head)}
@@ -247,7 +247,7 @@ const JudgingScreen: React.FC = () => {
                 onClick={handleReset}
                 className="bg-transparent text-white px-4 py-2 rounded-md border border-white"
               >
-                Next Athlete;
+                Next Athlete
               </button>
             ) : (
               <p className="text-gray-300">Please wait for the next athletes</p>

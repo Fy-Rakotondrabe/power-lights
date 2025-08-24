@@ -1,4 +1,6 @@
 import {
+  arrayRemove,
+  arrayUnion,
   collection,
   doc,
   getDoc,
@@ -69,25 +71,15 @@ export const getMeetById = (
 
 export const connectJudge = async (meetId: string, judge: Judge) => {
   const meetRef = doc(db, "meets", meetId);
-  const meetDoc = await getDoc(meetRef);
-  if (!meetDoc.exists()) {
-    throw new Error("Meet not found");
-  }
-  const meet = meetDoc.data() as Meet;
   await updateDoc(meetRef, {
-    judges: [...meet.judges, judge],
+    judges: arrayUnion(judge),
   });
 };
 
 export const submitVote = async (meetId: string, vote: Vote) => {
   const meetRef = doc(db, "meets", meetId);
-  const meetDoc = await getDoc(meetRef);
-  if (!meetDoc.exists()) {
-    throw new Error("Meet not found");
-  }
-  const meet = meetDoc.data() as Meet;
   await updateDoc(meetRef, {
-    votes: [...meet.votes, vote],
+    votes: arrayUnion(vote),
   });
 };
 
@@ -105,8 +97,26 @@ export const logoutJudge = async (meetId: string, judgeId: string) => {
     throw new Error("Meet not found");
   }
   const meet = meetDoc.data() as Meet;
-  await updateDoc(meetRef, {
-    judges: meet.judges.filter((judge) => judge.id !== judgeId),
-    votes: meet.votes.filter((vote) => vote.judgeId !== judgeId),
-  });
+
+  // Find the judge to remove
+  const judgeToRemove = meet.judges.find((judge) => judge.id === judgeId);
+  if (!judgeToRemove) {
+    throw new Error("Judge not found");
+  }
+
+  // Find votes to remove
+  const votesToRemove = meet.votes.filter((vote) => vote.judgeId === judgeId);
+
+  // Prepare update operations
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updateData: any = {
+    judges: arrayRemove(judgeToRemove),
+  };
+
+  // If there are votes to remove, we need to remove them individually
+  if (votesToRemove.length > 0) {
+    updateData.votes = meet.votes.filter((vote) => vote.judgeId !== judgeId);
+  }
+
+  await updateDoc(meetRef, updateData);
 };
