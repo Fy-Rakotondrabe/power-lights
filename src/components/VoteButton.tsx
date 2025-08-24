@@ -62,7 +62,7 @@ export const VoteButton: React.FC<VoteButtonProps> = ({
     }
   };
 
-  const { bg, activeBg, textColor } = getButtonStyle();
+  const { bg, activeBg } = getButtonStyle();
 
   return (
     <div
@@ -73,9 +73,6 @@ export const VoteButton: React.FC<VoteButtonProps> = ({
       {...handlers}
     >
       {pressing && <ProgressRing progress={progress} />}
-      <span className={`text-3xl font-bold ${textColor} select-none`}>
-        {color.charAt(0).toUpperCase() + color.slice(1)}
-      </span>
     </div>
   );
 };
